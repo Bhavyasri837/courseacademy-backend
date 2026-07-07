@@ -1,4 +1,5 @@
 package com.courseacademy.config;
+
 import com.courseacademy.security.JwtAuthFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -31,51 +33,51 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        
-            http
-    .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-    .csrf(csrf -> csrf.disable())
-            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
 
-                // Public auth endpoints
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/api/auth/**").permitAll()
+        http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
 
-                // Public course viewing
-                .requestMatchers(HttpMethod.GET, "/api/courses", "/api/courses/**").permitAll()
+                        // Public auth endpoints
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
 
-                // Admin-only endpoints
-                .requestMatchers(HttpMethod.POST,   "/api/courses").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT,    "/api/courses/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/courses/**").hasRole("ADMIN")
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/enrollments/all").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/enrollments/**").hasRole("ADMIN")
+                        // Public course viewing
+                        .requestMatchers(HttpMethod.GET, "/api/courses", "/api/courses/**").permitAll()
 
-                // Student-only endpoints
-                .requestMatchers("/api/enrollments/my").hasRole("STUDENT")
-                .requestMatchers(HttpMethod.POST, "/api/enrollments").hasRole("STUDENT")
-                .requestMatchers("/api/students/profile").hasRole("STUDENT")
+                        // Admin-only endpoints
+                        .requestMatchers(HttpMethod.POST, "/api/courses").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/courses/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/courses/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/enrollments/all").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/enrollments/**").hasRole("ADMIN")
 
-                // Everything else needs authentication
-                .anyRequest().authenticated()
-            )
-            .exceptionHandling(ex -> ex
-                    .authenticationEntryPoint((request, response, authException) -> {
-                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                        response.setCharacterEncoding("UTF-8");
-                        response.getWriter().write("{\"success\":false,\"message\":\"Authentication required.\"}");
-                    })
-                    .accessDeniedHandler((request, response, accessDeniedException) -> {
-                        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                        response.setCharacterEncoding("UTF-8");
-                        response.getWriter().write("{\"success\":false,\"message\":\"You do not have permission to perform this action.\"}");
-                    })
-            )
-            .addFilterBefore(jwtAuthFilter,UsernamePasswordAuthenticationFilter.class);
+                        // Student-only endpoints
+                        .requestMatchers("/api/enrollments/my").hasRole("STUDENT")
+                        .requestMatchers(HttpMethod.POST, "/api/enrollments").hasRole("STUDENT")
+                        .requestMatchers("/api/students/profile").hasRole("STUDENT")
+
+                        // Everything else needs authentication
+                        .anyRequest().authenticated()
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                            response.setCharacterEncoding("UTF-8");
+                            response.getWriter().write("{\"success\":false,\"message\":\"Authentication required.\"}");
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                            response.setCharacterEncoding("UTF-8");
+                            response.getWriter().write("{\"success\":false,\"message\":\"You do not have permission to perform this action.\"}");
+                        })
+                )
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -90,31 +92,33 @@ public class SecurityConfig {
             AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
+
     @Bean
-public CorsConfigurationSource corsConfigurationSource() {
-    CorsConfiguration configuration = new CorsConfiguration();
+    public CorsConfigurationSource corsConfigurationSource() {
 
-    configuration.setAllowedOrigins(List.of(
-            "http://localhost:5173",
-            "https://courseacademy-frontend.vercel.app"
-    ));
+        CorsConfiguration configuration = new CorsConfiguration();
 
-    configuration.setAllowedMethods(List.of(
-            "GET",
-            "POST",
-            "PUT",
-            "DELETE",
-            "OPTIONS"
-    ));
+        configuration.setAllowedOriginPatterns(List.of(
+                "http://localhost:5173",
+                "https://*.vercel.app"
+        ));
 
-    configuration.setAllowedHeaders(List.of("*"));
-    configuration.setAllowCredentials(true);
+        configuration.setAllowedMethods(List.of(
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "OPTIONS"
+        ));
 
-    UrlBasedCorsConfigurationSource source =
-            new UrlBasedCorsConfigurationSource();
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
 
-    source.registerCorsConfiguration("/**", configuration);
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
 
-    return source;
-}
+        source.registerCorsConfiguration("/**", configuration);
+
+        return source;
+    }
 }
