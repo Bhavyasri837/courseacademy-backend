@@ -1,5 +1,4 @@
 package com.courseacademy.config;
-
 import com.courseacademy.security.JwtAuthFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -17,11 +16,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -33,51 +27,49 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
-                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
 
-                        // Public auth endpoints
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
+                // Public auth endpoints
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers("/api/auth/**").permitAll()
 
-                        // Public course viewing
-                        .requestMatchers(HttpMethod.GET, "/api/courses", "/api/courses/**").permitAll()
+                // Public course viewing
+                .requestMatchers(HttpMethod.GET, "/api/courses", "/api/courses/**").permitAll()
 
-                        // Admin-only endpoints
-                        .requestMatchers(HttpMethod.POST, "/api/courses").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/courses/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/courses/**").hasRole("ADMIN")
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/enrollments/all").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/enrollments/**").hasRole("ADMIN")
+                // Admin-only endpoints
+                .requestMatchers(HttpMethod.POST,   "/api/courses").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT,    "/api/courses/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/courses/**").hasRole("ADMIN")
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/enrollments/all").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/enrollments/**").hasRole("ADMIN")
 
-                        // Student-only endpoints
-                        .requestMatchers("/api/enrollments/my").hasRole("STUDENT")
-                        .requestMatchers(HttpMethod.POST, "/api/enrollments").hasRole("STUDENT")
-                        .requestMatchers("/api/students/profile").hasRole("STUDENT")
+                // Student-only endpoints
+                .requestMatchers("/api/enrollments/my").hasRole("STUDENT")
+                .requestMatchers(HttpMethod.POST, "/api/enrollments").hasRole("STUDENT")
+                .requestMatchers("/api/students/profile").hasRole("STUDENT")
 
-                        // Everything else needs authentication
-                        .anyRequest().authenticated()
-                )
-                .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((request, response, authException) -> {
-                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                            response.setCharacterEncoding("UTF-8");
-                            response.getWriter().write("{\"success\":false,\"message\":\"Authentication required.\"}");
-                        })
-                        .accessDeniedHandler((request, response, accessDeniedException) -> {
-                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                            response.setCharacterEncoding("UTF-8");
-                            response.getWriter().write("{\"success\":false,\"message\":\"You do not have permission to perform this action.\"}");
-                        })
-                )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                // Everything else needs authentication
+                .anyRequest().authenticated()
+            )
+            .exceptionHandling(ex -> ex
+                    .authenticationEntryPoint((request, response, authException) -> {
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                        response.setCharacterEncoding("UTF-8");
+                        response.getWriter().write("{\"success\":false,\"message\":\"Authentication required.\"}");
+                    })
+                    .accessDeniedHandler((request, response, accessDeniedException) -> {
+                        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                        response.setCharacterEncoding("UTF-8");
+                        response.getWriter().write("{\"success\":false,\"message\":\"You do not have permission to perform this action.\"}");
+                    })
+            )
+            .addFilterBefore(jwtAuthFilter,UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -91,34 +83,5 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
-    }
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-
-        CorsConfiguration configuration = new CorsConfiguration();
-
-        configuration.setAllowedOriginPatterns(List.of(
-                "http://localhost:5173",
-                "https://*.vercel.app"
-        ));
-
-        configuration.setAllowedMethods(List.of(
-                "GET",
-                "POST",
-                "PUT",
-                "DELETE",
-                "OPTIONS"
-        ));
-
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
-
-        source.registerCorsConfiguration("/**", configuration);
-
-        return source;
     }
 }
