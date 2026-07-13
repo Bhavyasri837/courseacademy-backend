@@ -116,6 +116,14 @@ public class StudentService {
 
     @Transactional
     public ApiResponse resetPassword(ForgotPasswordRequest req) {
+        if (req.getEmail() == null || req.getEmail().isBlank()) {
+            throw new BadRequestException("Email is required.");
+        }
+
+        // OTP must be verified before allowing password change.
+        // This is server-side enforcement; frontend cannot bypass it.
+        studentEmailOtpService.getValidVerifiedOtpOrThrow(req.getEmail());
+
         Student student = null;
 
         if (req.getRollNumber() != null && !req.getRollNumber().isBlank()) {
@@ -134,10 +142,18 @@ public class StudentService {
             throw new BadRequestException("No matching student found. Check your email, roll number, or mobile number.");
         }
 
+        if (req.getNewPassword() == null || req.getNewPassword().isBlank()) {
+        throw new BadRequestException("New password is required.");
+        }
         student.setPassword(passwordEncoder.encode(req.getNewPassword()));
         studentRepository.save(student);
+
+        // Single-use OTP: remove after successful password reset
+        studentEmailOtpService.deleteOtpByEmail(req.getEmail());
+
         return ApiResponse.ok("Password updated successfully. Please login with your new password.");
     }
+
 
     public ApiResponse sendOtp(SendOtpRequest req) {
         return studentEmailOtpService.sendOtp(req);

@@ -32,9 +32,22 @@ public class SecurityConfig {
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
 
-                // Public auth endpoints
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/api/auth/**").permitAll()
+                
+
+                // Public endpoints
+.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+// Authentication
+.requestMatchers("/api/auth/**").permitAll()
+
+// Student Authentication
+.requestMatchers(
+        "/api/student/register",
+        "/api/student/login",
+        "/api/student/send-otp",
+        "/api/student/verify-otp",
+        "/api/student/reset-password"
+).permitAll()
 
                 // Public course viewing
                 .requestMatchers(HttpMethod.GET, "/api/courses", "/api/courses/**").permitAll()

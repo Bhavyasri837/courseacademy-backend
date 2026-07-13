@@ -74,9 +74,10 @@ public class EnrollmentService {
                 .transactionId(req.getRazorpayPaymentId() != null ? req.getRazorpayPaymentId() : req.getTransactionId())
                 .paymentScreenshotLink(req.getPaymentScreenshotLink())
                 .paymentDate(req.getPaymentDate() != null ? req.getPaymentDate() : LocalDate.now().toString())
-                .paymentStatus("VERIFIED")
-                .status("PENDING")
+                .paymentStatus("SUCCESS")
+                .status("APPROVED")
                 .build();
+
 
         return enrollmentRepository.save(enrollment);
 
